@@ -177,7 +177,7 @@ local Lang = {
         EnableTracers = "Show Tracers",
         TracersTip = "Lines from top-center of screen to enemy heads.\nOnly shows visible enemies.",
         InfAmmoSec = "INFINITE AMMO",
-        InfAmmoTip = "Select a gun category or type gun name to bug ammo.",
+        InfAmmoTip = "Select a gun category or type gun name to get infinite ammo.",
         InfAmmoSniper = "Sniper Rifles",
         InfAmmoRifle = "Assault Rifles",
         InfAmmoSpecial = "Special Weapons",
@@ -244,7 +244,7 @@ local Lang = {
         EnableTracers = "แสดงเส้นชี้เป้า",
         TracersTip = "เส้นจากด้านบนหน้าจอชี้ไปที่หัวศัตรู\nแสดงเฉพาะศัตรูที่มองเห็น",
         InfAmmoSec = "กระสุนไม่จำกัด",
-        InfAmmoTip = "เลือกหมวดหมู่ปืนหรือพิมพ์ชื่อปืนเพื่อบั๊กกระสุน",
+        InfAmmoTip = "เลือกหมวดหมู่ปืนหรือพิมพ์ชื่อปืนเพื่อทำกระสุนไม่จำกัด",
         InfAmmoSniper = "ปืนสไนเปอร์",
         InfAmmoRifle = "ปืนไรเฟิล",
         InfAmmoSpecial = "อาวุธพิเศษ",
@@ -1835,14 +1835,33 @@ aimlockDot.Visible = false
 -- Sticky target: stays locked until user moves mouse or target dies/leaves
 local aimlockTarget = nil
 
--- Detect mouse movement to break lock
+-- Detect mouse/touch movement to break lock (works on both PC and Mobile)
 local aimlockMouseDelta = Vector2.zero
+local aimlockLastTouchPos = nil -- track touch position for mobile
 local aimlockMouseConn = UserInputService.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement then
+        -- PC: mouse delta
         aimlockMouseDelta = aimlockMouseDelta + Vector2.new(math.abs(input.Delta.X), math.abs(input.Delta.Y))
+    elseif input.UserInputType == Enum.UserInputType.Touch then
+        -- Mobile: calculate delta from touch movement
+        local pos = input.Position
+        if aimlockLastTouchPos then
+            local dx = math.abs(pos.X - aimlockLastTouchPos.X)
+            local dy = math.abs(pos.Y - aimlockLastTouchPos.Y)
+            aimlockMouseDelta = aimlockMouseDelta + Vector2.new(dx, dy)
+        end
+        aimlockLastTouchPos = pos
     end
 end)
 table.insert(allConns, aimlockMouseConn)
+
+-- Reset touch tracking when finger lifts
+local aimlockTouchEndConn = UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        aimlockLastTouchPos = nil
+    end
+end)
+table.insert(allConns, aimlockTouchEndConn)
 
 -- Use BindToRenderStep AFTER game camera (priority 201 = after Camera at 200)
 -- so we override the game's camera update without fighting it
@@ -1861,8 +1880,10 @@ RunService:BindToRenderStep(AIMLOCK_BIND_NAME, 201, function()
     local center = Vector2.new(vp.X / 2, vp.Y / 2)
     local radius = Config.AimlockRadius
 
-    -- If user moved mouse significantly, break lock so they can re-aim
-    if aimlockMouseDelta.Magnitude > 5 then
+    -- If user moved mouse/touch significantly, break lock so they can re-aim
+    -- Threshold: 5px for mouse, 15px for touch (touch is less precise)
+    local breakThreshold = UserInputService.TouchEnabled and 15 or 5
+    if aimlockMouseDelta.Magnitude > breakThreshold then
         aimlockTarget = nil
     end
     aimlockMouseDelta = Vector2.zero
