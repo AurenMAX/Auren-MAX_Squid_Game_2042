@@ -160,6 +160,7 @@ Ic = {
     Scaling   = "rbxassetid://10734942072",
     Move      = "rbxassetid://10734900011",
     Navigation= "rbxassetid://10734906332",
+    Infinity  = "rbxassetid://10723415766",
 }
 end
 
@@ -1191,7 +1192,7 @@ trLbl.TextColor3 = T.TxD; trLbl.TextSize = 8; trLbl.Font = Enum.Font.Gotham; trL
 trLbl.TextWrapped = true; trLbl.Parent = trInfo
 table.insert(TranslatableUI, {obj=trLbl, key="TracersTip"})
 
-local ia1 = Sec(cP, "INFINITE AMMO", Ic.Flame, 3, "InfAmmoSec")
+local ia1 = Sec(cP, "INFINITE AMMO", Ic.Infinity, 3, "InfAmmoSec")
 
 -- Tip label
 local iaInfo = Instance.new("Frame"); iaInfo.Size = UDim2.new(1,0,0,22); iaInfo.BackgroundTransparency = 1; iaInfo.LayoutOrder = 1; iaInfo.Parent = ia1
