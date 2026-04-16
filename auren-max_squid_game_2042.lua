@@ -13,6 +13,27 @@ local Camera = workspace.CurrentCamera
 
 local DESTROYED = false
 
+-- ==================== FORWARD DECLARATIONS (cross-section shared locals) ====================
+local Config, ESP
+local Ic
+local CurrentLang, Lang, L, TranslatableUI
+local T
+local Tw, Crn, Stk, HPCol
+local allConns
+local keyVerified
+local BASE_W, BASE_H, getAutoScale
+local Gui, Main, UIScaleObj, glowStk
+local Lo, Hdr, HdrBtm, AL, MinBtn, ClsBtn
+local langDropOpen, LangBtn, LangDrop, LangArrow, LangFlagImg, updateAllLangUI, optENFlag, optTHFlag
+local Content
+local Pgs, aTab, tS, SwTab, MkTab, pP, vP, cP, coP, sP
+local Sec, Tog, Sld, CPick, IRow, Spc, activeSliderLock, infAmmoStatusLbl
+local aimlockCircle, aimlockStroke, aimlockDot, runAmmoBugByName
+local AIMLOCK_BIND_NAME, TRACER_BIND_NAME, cleanAllTracers
+local pcI, fpI
+local flyBodyVel, flyBodyGyro, flyActive, ghostFlyFrozen, savedWalkSpeed, freezeCharacter, unfreezeCharacter, startFly, stopFly
+
+
 -- Logo + Flags: load asynchronously so intro appears INSTANTLY
 local LOGO_ASSET = nil
 local LOGO_URL = "https://i.postimg.cc/TYJ5nqD5/file-000000009f9071fd9e08e99d8439917f.png"
@@ -83,7 +104,8 @@ task.spawn(function()
 end)
 
 -- ==================== CONFIG (ALL OFF by default) ====================
-local Config = {
+do
+Config = {
     Highlight       = false,
     EnemyOnly       = false,
     Aimlock         = false,
@@ -105,10 +127,12 @@ local Config = {
     UIScale         = 1,
 }
 
-local ESP = {}
+ESP = {}
+end
 
 -- ==================== LUCIDE ICONS ====================
-local Ic = {
+do
+Ic = {
     Eye       = "rbxassetid://10723346959",
     Crosshair = "rbxassetid://10709818534",
     Cog       = "rbxassetid://10709810948",
@@ -124,14 +148,26 @@ local Ic = {
     Activity  = "rbxassetid://10709752035",
     Shield    = "rbxassetid://10734951847",
     Zap       = "rbxassetid://10747392270",
-    Sliders   = "rbxassetid://10734960418",
+    Sliders   = "rbxassetid://10734963400",
     Rocket    = "rbxassetid://10734935032",
+    User      = "rbxassetid://10747373176",
+    Ghost     = "rbxassetid://10723396107",
+    Gauge     = "rbxassetid://10723395708",
+    Swords    = "rbxassetid://10734975692",
+    Flame     = "rbxassetid://10723376114",
+    Scan      = "rbxassetid://10734942565",
+    Send      = "rbxassetid://10734943902",
+    Scaling   = "rbxassetid://10734942072",
+    Move      = "rbxassetid://10734900011",
+    Navigation= "rbxassetid://10734906332",
 }
+end
 
 -- ==================== LANGUAGE SYSTEM ====================
-local CurrentLang = "EN"
+do
+CurrentLang = "EN"
 
-local Lang = {
+Lang = {
     EN = {
         -- Key system
         EnterKey = "Enter your key to continue",
@@ -271,13 +307,15 @@ local Lang = {
     },
 }
 
-local function L(key) return Lang[CurrentLang][key] or Lang.EN[key] or key end
+function L(key) return Lang[CurrentLang][key] or Lang.EN[key] or key end
 
 -- Track all translatable UI elements for live switching
-local TranslatableUI = {}
+TranslatableUI = {}
+end
 
 -- ==================== THEME: GREEN-BLACK LUXURY ====================
-local T = {
+do
+T = {
     Bg  = Color3.fromRGB(8, 12, 8),
     Sf  = Color3.fromRGB(14, 22, 14),
     SfL = Color3.fromRGB(22, 36, 22),
@@ -297,18 +335,22 @@ local T = {
     HL = Color3.fromRGB(255, 140, 30),
     HC = Color3.fromRGB(255, 50, 50),
 }
+end
 
 -- ==================== UTIL ====================
-local function Tw(o,p,d,s,r) TweenService:Create(o,TweenInfo.new(d or 0.25,s or Enum.EasingStyle.Quart,r or Enum.EasingDirection.Out),p):Play() end
-local function Crn(p,r) local c=Instance.new("UICorner");c.CornerRadius=UDim.new(0,r or 8);c.Parent=p;return c end
-local function Stk(p,c,t,tr) local s=Instance.new("UIStroke");s.Color=c or T.Bd;s.Thickness=t or 1;s.Transparency=tr or 0;s.Parent=p;return s end
+do
+function Tw(o,p,d,s,r) TweenService:Create(o,TweenInfo.new(d or 0.25,s or Enum.EasingStyle.Quart,r or Enum.EasingDirection.Out),p):Play() end
+function Crn(p,r) local c=Instance.new("UICorner");c.CornerRadius=UDim.new(0,r or 8);c.Parent=p;return c end
+function Stk(p,c,t,tr) local s=Instance.new("UIStroke");s.Color=c or T.Bd;s.Thickness=t or 1;s.Transparency=tr or 0;s.Parent=p;return s end
 
-local function HPCol(r)
+function HPCol(r)
     if r > 0.75 then return T.HF elseif r > 0.50 then return T.HH
     elseif r > 0.30 then return T.HM elseif r > 0.15 then return T.HL else return T.HC end
 end
+end
 
 -- ==================== CLEANUP OLD INSTANCES ====================
+do
 for _,n in ipairs({"NBG_OP","NBG_OP_INTRO","AUREN_MAX","AUREN_MAX_INTRO","AUREN_TRACERS","AUREN_KEY"}) do
     local o = LocalPlayer.PlayerGui:FindFirstChild(n); if o then o:Destroy() end
 end
@@ -344,9 +386,11 @@ if _G.NBG_ANTIKB then pcall(function() _G.NBG_ANTIKB:Disconnect() end) end
 pcall(function() RunService:UnbindFromRenderStep("AurenAimlock") end)
 pcall(function() RunService:UnbindFromRenderStep("AurenTracers") end)
 
-local allConns = {} -- track ALL connections for clean destroy
+allConns = {} -- track ALL connections for clean destroy
+end
 
 -- ==================== INTRO ====================
+do
 local IG = Instance.new("ScreenGui"); IG.Name = "AUREN_MAX_INTRO"; IG.ResetOnSpawn = false
 IG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling; IG.DisplayOrder = 100; IG.AutoLocalize = false
 IG.Parent = LocalPlayer:WaitForChild("PlayerGui")
@@ -386,15 +430,17 @@ Tw(IB,{BackgroundTransparency=1},0.3)
 Tw(IT,{TextTransparency=1},0.2); Tw(IS,{TextTransparency=1},0.2)
 Tw(LB,{BackgroundTransparency=1},0.15); Tw(OV,{BackgroundTransparency=1},0.35)
 task.wait(0.4); IG:Destroy()
+end
 
 -- ==================== KEY SYSTEM ====================
+do
 -- Key is obfuscated to prevent easy extraction from source
 local function _dk()
     local d={27,47,40,63,52,119,23,27,2,119,98,104,111,99,107,106,110}
     local s,x="",90 for i=1,#d do s=s..string.char(bit32.bxor(d[i],x)) end return s
 end
 local VALID_KEY = _dk()
-local keyVerified = false  -- set true ONLY after animation fully completes
+keyVerified = false  -- set true ONLY after animation fully completes
 
 local KG = Instance.new("ScreenGui"); KG.Name = "AUREN_KEY"; KG.ResetOnSpawn = false
 KG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling; KG.DisplayOrder = 99; KG.AutoLocalize = false
@@ -599,12 +645,14 @@ if not LOGO_ASSET then
         end
     end)
 end
+end
 
 -- ==================== RESPONSIVE SYSTEM ====================
-local BASE_W = 380
-local BASE_H = 520
+do
+BASE_W = 380
+BASE_H = 520
 
-local function getAutoScale()
+function getAutoScale()
     local vp = Camera.ViewportSize
     local w, h = vp.X, vp.Y
     local sw
@@ -622,22 +670,24 @@ local function getAutoScale()
     local sh = (h - 16) / BASE_H
     return math.min(sw, sh)
 end
+end
 
 -- ==================== MAIN GUI ====================
-local Gui = Instance.new("ScreenGui"); Gui.Name = "AUREN_MAX"; Gui.ResetOnSpawn = false
+do
+Gui = Instance.new("ScreenGui"); Gui.Name = "AUREN_MAX"; Gui.ResetOnSpawn = false
 Gui.ZIndexBehavior = Enum.ZIndexBehavior.Global; Gui.AutoLocalize = false
 Gui.IgnoreGuiInset = true  -- UI starts at very top of screen
 Gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 -- Main parented directly to ScreenGui — no intermediate ScaleRoot
-local Main = Instance.new("Frame"); Main.Name = "Main"
+Main = Instance.new("Frame"); Main.Name = "Main"
 Main.AnchorPoint = Vector2.new(0.5,0)
 Main.Size = UDim2.new(0,BASE_W,0,BASE_H); Main.Position = UDim2.new(0.5,0,0,4)
 Main.BackgroundColor3 = T.Bg; Main.BorderSizePixel = 0; Main.BackgroundTransparency = 1
 Main.Parent = Gui; Crn(Main,12); Stk(Main,T.Bd,1)
 -- UIScale on Main: position stays in screen coords, only Main's visual size scales
-local UIScaleObj = Instance.new("UIScale"); UIScaleObj.Scale = getAutoScale() * Config.UIScale; UIScaleObj.Parent = Main
-local glowStk = Stk(Main,T.Ac,1.5,0.7)
+UIScaleObj = Instance.new("UIScale"); UIScaleObj.Scale = getAutoScale() * Config.UIScale; UIScaleObj.Parent = Main
+glowStk = Stk(Main,T.Ac,1.5,0.7)
 
 -- Shadow
 local sh = Instance.new("ImageLabel"); sh.BackgroundTransparency = 1; sh.Image = "rbxassetid://5554236805"
@@ -646,18 +696,20 @@ sh.SliceCenter = Rect.new(23,23,277,277); sh.Size = UDim2.new(1,30,1,30); sh.Pos
 sh.ZIndex = -1; sh.Parent = Main
 
 -- Main stays transparent until script finishes building (shown at end of script)
+end
 
 -- ==================== HEADER ====================
-local Hdr = Instance.new("Frame"); Hdr.Size = UDim2.new(1,0,0,48); Hdr.BackgroundTransparency = 1
+do
+Hdr = Instance.new("Frame"); Hdr.Size = UDim2.new(1,0,0,48); Hdr.BackgroundTransparency = 1
 Hdr.BorderSizePixel = 0; Hdr.Active = true; Hdr.Parent = Main
 
 local HdrBg = Instance.new("Frame"); HdrBg.Size = UDim2.new(1,0,1,0); HdrBg.BackgroundColor3 = T.Sf
 HdrBg.BorderSizePixel = 0; HdrBg.Parent = Hdr; Crn(HdrBg,12)
-local HdrBtm = Instance.new("Frame"); HdrBtm.Size = UDim2.new(1,0,0,14)
+HdrBtm = Instance.new("Frame"); HdrBtm.Size = UDim2.new(1,0,0,14)
 HdrBtm.Position = UDim2.new(0,0,1,-14); HdrBtm.BackgroundColor3 = T.Sf; HdrBtm.BorderSizePixel = 0; HdrBtm.Parent = Hdr
 
 -- Accent line (inset so it doesn't touch rounded corners)
-local AL = Instance.new("Frame"); AL.Size = UDim2.new(1,-24,0,2)
+AL = Instance.new("Frame"); AL.Size = UDim2.new(1,-24,0,2)
 AL.Position = UDim2.new(0,12,1,-1); AL.BackgroundColor3 = T.Ac; AL.BorderSizePixel = 0; AL.ZIndex = 3; AL.Parent = Hdr; Crn(AL,1)
 local ag = Instance.new("UIGradient"); ag.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0,Color3.fromRGB(0,180,70)),
@@ -681,7 +733,7 @@ table.insert(allConns, UserInputService.InputChanged:Connect(function(input)
 end))
 
 -- Logo
-local Lo = Instance.new("ImageLabel"); Lo.Size = UDim2.new(0,32,0,32); Lo.Position = UDim2.new(0,8,0,8)
+Lo = Instance.new("ImageLabel"); Lo.Size = UDim2.new(0,32,0,32); Lo.Position = UDim2.new(0,8,0,8)
 Lo.BackgroundColor3 = T.SfL; Lo.BorderSizePixel = 0; Lo.Image = LOGO_ASSET or ""
 Lo.ScaleType = Enum.ScaleType.Fit; Lo.ZIndex = 2; Lo.Parent = Hdr; Crn(Lo,8)
 -- Loading animation fallback: pulsing glow (no text)
@@ -716,11 +768,13 @@ local function HBtn(icon,px,hc)
     b.MouseLeave:Connect(function() Tw(b,{BackgroundColor3=T.SfL},0.15); Tw(i,{ImageColor3=T.TxS},0.15) end)
     return b
 end
-local MinBtn = HBtn(Ic.Minimize, -66, Color3.fromRGB(55,180,140))
-local ClsBtn = HBtn(Ic.X, -34, T.Rd)
+MinBtn = HBtn(Ic.Minimize, -66, Color3.fromRGB(55,180,140))
+ClsBtn = HBtn(Ic.X, -34, T.Rd)
+end
 
 -- ==================== LANGUAGE SELECTOR ====================
-local langDropOpen = false
+do
+langDropOpen = false
 local LANG_BTN_W = 100 -- wide enough for flag + "English" / "ภาษาไทย" + arrow
 local LANG_DROP_W = 120
 
@@ -734,14 +788,14 @@ local function MakeFlagImg(parent, url, asset, zIdx)
 end
 
 -- Position: next to MinBtn (which is at 1,-66). LangBtn goes further left.
-local LangBtn = Instance.new("TextButton"); LangBtn.Size = UDim2.new(0,LANG_BTN_W,0,28)
+LangBtn = Instance.new("TextButton"); LangBtn.Size = UDim2.new(0,LANG_BTN_W,0,28)
 LangBtn.Position = UDim2.new(1,-(LANG_BTN_W + 70),0,10)
 LangBtn.BackgroundColor3 = T.SfL; LangBtn.BorderSizePixel = 0; LangBtn.Text = ""
 LangBtn.AutoButtonColor = false; LangBtn.ZIndex = 10; LangBtn.Parent = Hdr; Crn(LangBtn,7)
 Stk(LangBtn, T.Bd, 1, 0.15)
 
 -- Flag icon on the left
-local LangFlagImg = MakeFlagImg(LangBtn, FLAG_EN_URL, FLAG_EN_ASSET, 11)
+LangFlagImg = MakeFlagImg(LangBtn, FLAG_EN_URL, FLAG_EN_ASSET, 11)
 LangFlagImg.Size = UDim2.new(0,20,0,13); LangFlagImg.Position = UDim2.new(0,7,0.5,-6)
 
 -- Language name text in the middle (centered between flag and arrow)
@@ -752,13 +806,13 @@ LangLabel.Font = Enum.Font.GothamBold; LangLabel.TextXAlignment = Enum.TextXAlig
 LangLabel.ZIndex = 11; LangLabel.Parent = LangBtn
 
 -- Dropdown arrow (simple "v" text - Gotham renders this cleanly)
-local LangArrow = Instance.new("TextLabel"); LangArrow.Size = UDim2.new(0,12,1,0)
+LangArrow = Instance.new("TextLabel"); LangArrow.Size = UDim2.new(0,12,1,0)
 LangArrow.Position = UDim2.new(1,-14,0,0); LangArrow.BackgroundTransparency = 1
 LangArrow.Text = "v"; LangArrow.TextColor3 = T.TxD; LangArrow.TextSize = 8
 LangArrow.Font = Enum.Font.GothamBold; LangArrow.ZIndex = 11; LangArrow.Parent = LangBtn
 
 -- Dropdown panel (parented to Main for proper z-layering above tabs)
-local LangDrop = Instance.new("Frame"); LangDrop.Size = UDim2.new(0,LANG_DROP_W,0,0)
+LangDrop = Instance.new("Frame"); LangDrop.Size = UDim2.new(0,LANG_DROP_W,0,0)
 LangDrop.Position = UDim2.new(1,-(LANG_DROP_W + 70),0,50)
 LangDrop.BackgroundColor3 = T.Sf; LangDrop.BorderSizePixel = 0
 LangDrop.ClipsDescendants = true; LangDrop.ZIndex = 50
@@ -827,13 +881,17 @@ LangBtn.MouseButton1Click:Connect(function()
         task.delay(0.15, function() if not langDropOpen then LangDrop.Visible = false end end)
     end
 end)
+end
 
 -- ==================== CONTENT ====================
-local Content = Instance.new("Frame"); Content.Name = "Content"
+do
+Content = Instance.new("Frame"); Content.Name = "Content"
 Content.Size = UDim2.new(1,0,1,-50); Content.Position = UDim2.new(0,0,0,50)
 Content.BackgroundTransparency = 1; Content.BorderSizePixel = 0; Content.Parent = Main
+end
 
 -- ==================== TAB BAR ====================
+do
 local TB = Instance.new("Frame"); TB.Size = UDim2.new(1,-16,0,32); TB.Position = UDim2.new(0,8,0,2)
 TB.BackgroundColor3 = T.Sf; TB.BorderSizePixel = 0; TB.ClipsDescendants = true; TB.Parent = Content; Crn(TB,8)
 
@@ -843,12 +901,12 @@ TBPad.PaddingRight = UDim.new(0,4); TBPad.Parent = TB
 local TBLay = Instance.new("UIListLayout"); TBLay.FillDirection = Enum.FillDirection.Horizontal
 TBLay.HorizontalAlignment = Enum.HorizontalAlignment.Center; TBLay.Padding = UDim.new(0,2); TBLay.Parent = TB
 
-local Pgs = Instance.new("Frame"); Pgs.Size = UDim2.new(1,-16,1,-38); Pgs.Position = UDim2.new(0,8,0,38)
+Pgs = Instance.new("Frame"); Pgs.Size = UDim2.new(1,-16,1,-38); Pgs.Position = UDim2.new(0,8,0,38)
 Pgs.BackgroundTransparency = 1; Pgs.BorderSizePixel = 0; Pgs.Parent = Content
 
-local aTab = nil; local tS = {}
+aTab = nil; tS = {}
 
-local function SwTab(n)
+function SwTab(n)
     if aTab == n then return end
     if aTab and tS[aTab] then
         local o = tS[aTab]
@@ -865,7 +923,7 @@ local TAB_FONT_SZ = 8
 local TAB_ICON_SZ = 9
 local TAB_GAP = 4
 
-local function MkTab(name,icon)
+function MkTab(name,icon)
     local b = Instance.new("TextButton"); b.Size = UDim2.new(0.2,-2,0,26)
     b.BackgroundColor3 = T.SfL; b.Text = ""; b.BorderSizePixel = 0; b.AutoButtonColor = false
     b.ZIndex = 3; b.Parent = TB; Crn(b,6)
@@ -903,15 +961,17 @@ local function MkTab(name,icon)
     return p
 end
 
-local pP = MkTab("Player", Ic.Eye)
-local vP = MkTab("Visuals", Ic.Crosshair)
-local cP = MkTab("Combat", Ic.Shield)
-local coP = MkTab("Color", Ic.Palette)
-local sP = MkTab("Settings", Ic.Cog)
+pP = MkTab("Player", Ic.User)
+vP = MkTab("Visuals", Ic.Eye)
+cP = MkTab("Combat", Ic.Swords)
+coP = MkTab("Color", Ic.Palette)
+sP = MkTab("Settings", Ic.Cog)
 SwTab("Player")
+end
 
 -- ==================== UI BUILDERS ====================
-local function Sec(parent,title,icon,order,langKey)
+do
+function Sec(parent,title,icon,order,langKey)
     local s = Instance.new("Frame"); s.Size = UDim2.new(1,0,0,0); s.AutomaticSize = Enum.AutomaticSize.Y
     s.BackgroundColor3 = T.Sf; s.BorderSizePixel = 0; s.LayoutOrder = order; s.Parent = parent; Crn(s,8); Stk(s,T.Bd,1,0.5)
     local ly = Instance.new("UIListLayout"); ly.SortOrder = Enum.SortOrder.LayoutOrder; ly.Parent = s
@@ -927,7 +987,7 @@ local function Sec(parent,title,icon,order,langKey)
     return s
 end
 
-local function Tog(parent,text,def,order,cb,langKey)
+function Tog(parent,text,def,order,cb,langKey)
     local c = Instance.new("Frame"); c.Size = UDim2.new(1,0,0,34); c.BackgroundTransparency = 1; c.LayoutOrder = order; c.Parent = parent
     local l = Instance.new("TextLabel"); l.Size = UDim2.new(1,-60,1,0); l.Position = UDim2.new(0,12,0,0)
     l.BackgroundTransparency = 1; l.Text = text; l.TextColor3 = T.Tx; l.TextSize = 11; l.Font = Enum.Font.Gotham
@@ -953,8 +1013,8 @@ local function Tog(parent,text,def,order,cb,langKey)
     return setToggle
 end
 
-local activeSliderLock = nil  -- only one slider can be dragged at a time
-local function Sld(parent,text,mn,mx,def,order,cb,langKey)
+activeSliderLock = nil  -- only one slider can be dragged at a time
+function Sld(parent,text,mn,mx,def,order,cb,langKey)
     local c = Instance.new("Frame"); c.Size = UDim2.new(1,0,0,44); c.BackgroundTransparency = 1; c.LayoutOrder = order; c.Parent = parent
     local l = Instance.new("TextLabel"); l.Size = UDim2.new(0.55,-12,0,14); l.Position = UDim2.new(0,12,0,2)
     l.BackgroundTransparency = 1; l.Text = text; l.TextColor3 = T.Tx; l.TextSize = 11; l.Font = Enum.Font.Gotham
@@ -996,7 +1056,7 @@ local function Sld(parent,text,mn,mx,def,order,cb,langKey)
     end))
 end
 
-local function CPick(parent,text,def,order,cb,langKey)
+function CPick(parent,text,def,order,cb,langKey)
     local cols = {Color3.fromRGB(0,220,90), Color3.fromRGB(0,255,180), Color3.fromRGB(0,180,255), Color3.fromRGB(255,255,255), Color3.fromRGB(255,0,0), Color3.fromRGB(255,220,50), Color3.fromRGB(255,100,175), Color3.fromRGB(150,75,255), Color3.fromRGB(0,255,255)}
     local c = Instance.new("Frame"); c.Size = UDim2.new(1,0,0,50); c.BackgroundTransparency = 1; c.LayoutOrder = order; c.Parent = parent
     local l = Instance.new("TextLabel"); l.Size = UDim2.new(1,-12,0,16); l.Position = UDim2.new(0,12,0,1)
@@ -1014,7 +1074,7 @@ local function CPick(parent,text,def,order,cb,langKey)
     end
 end
 
-local function IRow(parent,lbl,val,order,langKey)
+function IRow(parent,lbl,val,order,langKey)
     local c = Instance.new("Frame"); c.Size = UDim2.new(1,0,0,24); c.BackgroundTransparency = 1; c.LayoutOrder = order; c.Parent = parent
     local l = Instance.new("TextLabel"); l.Size = UDim2.new(0.5,-12,1,0); l.Position = UDim2.new(0,12,0,0)
     l.BackgroundTransparency = 1; l.Text = lbl; l.TextColor3 = T.TxS; l.TextSize = 10; l.Font = Enum.Font.Gotham
@@ -1025,13 +1085,14 @@ local function IRow(parent,lbl,val,order,langKey)
     v.TextXAlignment = Enum.TextXAlignment.Right; v.Parent = c; return v
 end
 
-local function Spc(p,o) local s = Instance.new("Frame"); s.Size = UDim2.new(1,0,0,4); s.BackgroundTransparency = 1; s.LayoutOrder = o; s.Parent = p end
+function Spc(p,o) local s = Instance.new("Frame"); s.Size = UDim2.new(1,0,0,4); s.BackgroundTransparency = 1; s.LayoutOrder = o; s.Parent = p end
 
 -- Forward declaration for ammo bug status label (set in UI, used in runtime)
-local infAmmoStatusLbl
+end
 
 -- ==================== PLAYER TAB ====================
-local s4 = Sec(pP, "MOVEMENT", Ic.Rocket, 1, "Movement")
+do
+local s4 = Sec(pP, "MOVEMENT", Ic.Move, 1, "Movement")
 Sld(s4, "Speed", 16, 500, 16, 1, function(v)
     Config.Speed = v
     local ch = LocalPlayer.Character
@@ -1041,7 +1102,7 @@ Sld(s4, "Speed", 16, 500, 16, 1, function(v)
     end
 end, "Speed")
 
-local s5 = Sec(pP, "FLY", Ic.Rocket, 2, "Fly")
+local s5 = Sec(pP, "FLY", Ic.Navigation, 2, "Fly")
 Tog(s5, "Enable Fly", false, 1, function(v) Config.Fly = v end, "EnableFly")
 Sld(s5, "Fly Speed", 10, 500, 80, 2, function(v) Config.FlySpeed = v end, "FlySpeed")
 
@@ -1052,7 +1113,7 @@ flyLbl.TextColor3 = T.TxD; flyLbl.TextSize = 8; flyLbl.Font = Enum.Font.Gotham; 
 flyLbl.TextWrapped = true; flyLbl.Parent = flyInfo
 table.insert(TranslatableUI, {obj=flyLbl, key="FlyTip"})
 
-local s6 = Sec(pP, "GHOST NOCLIP", Ic.Filter, 3, "GhostNoclip")
+local s6 = Sec(pP, "GHOST NOCLIP", Ic.Ghost, 3, "GhostNoclip")
 Tog(s6, "Ghost Mode", false, 1, function(v) Config.GhostNoclip = v end, "GhostMode")
 
 local gnInfo = Instance.new("Frame"); gnInfo.Size = UDim2.new(1,0,0,30); gnInfo.BackgroundTransparency = 1; gnInfo.LayoutOrder = 2; gnInfo.Parent = s6
@@ -1063,8 +1124,10 @@ gnLbl.TextWrapped = true; gnLbl.Parent = gnInfo
 table.insert(TranslatableUI, {obj=gnLbl, key="GhostTip"})
 
 Spc(pP, 99)
+end
 
 -- ==================== VISUALS TAB ====================
+do
 local v1 = Sec(vP, "ESP", Ic.Eye, 1, "ESP")
 Tog(v1, "Enable Highlight", false, 1, function(v) Config.Highlight = v; Rebuild() end, "EnableHighlight")
 Tog(v1, "Enemy Only", false, 2, function(v) Config.EnemyOnly = v; Rebuild() end, "EnemyOnly")
@@ -1092,11 +1155,13 @@ for i,st in ipairs(stgs) do
 end
 
 Spc(vP, 99)
+end
 
 -- ==================== COMBAT TAB ====================
-local aimlockCircle = nil -- forward declaration, created later
-local aimlockStroke = nil
-local aimlockDot = nil
+do
+aimlockCircle = nil -- forward declaration, created later
+aimlockStroke = nil
+aimlockDot = nil
 local al1 = Sec(cP, "AIMLOCK", Ic.Target, 1, "AimlockSec")
 Tog(al1, "Enable Aimlock", false, 1, function(v)
     Config.Aimlock = v
@@ -1116,7 +1181,7 @@ alLbl.TextColor3 = T.TxD; alLbl.TextSize = 8; alLbl.Font = Enum.Font.Gotham; alL
 alLbl.TextWrapped = true; alLbl.Parent = alInfo
 table.insert(TranslatableUI, {obj=alLbl, key="AimlockTip"})
 
-local tr1 = Sec(vP, "ESP TRACERS", Ic.Target, 5, "TracersSec")
+local tr1 = Sec(vP, "ESP TRACERS", Ic.Activity, 5, "TracersSec")
 Tog(tr1, "Show Tracers", false, 1, function(v) Config.Tracers = v end, "EnableTracers")
 
 local trInfo = Instance.new("Frame"); trInfo.Size = UDim2.new(1,0,0,30); trInfo.BackgroundTransparency = 1; trInfo.LayoutOrder = 2; trInfo.Parent = tr1
@@ -1126,7 +1191,7 @@ trLbl.TextColor3 = T.TxD; trLbl.TextSize = 8; trLbl.Font = Enum.Font.Gotham; trL
 trLbl.TextWrapped = true; trLbl.Parent = trInfo
 table.insert(TranslatableUI, {obj=trLbl, key="TracersTip"})
 
-local ia1 = Sec(cP, "INFINITE AMMO", Ic.Shield, 3, "InfAmmoSec")
+local ia1 = Sec(cP, "INFINITE AMMO", Ic.Flame, 3, "InfAmmoSec")
 
 -- Tip label
 local iaInfo = Instance.new("Frame"); iaInfo.Size = UDim2.new(1,0,0,22); iaInfo.BackgroundTransparency = 1; iaInfo.LayoutOrder = 1; iaInfo.Parent = ia1
@@ -1150,7 +1215,6 @@ local iaGunListLayout = Instance.new("UIListLayout"); iaGunListLayout.SortOrder 
 iaGunListLayout.Padding = UDim.new(0,2); iaGunListLayout.Parent = iaGunList
 
 -- Forward declare runAmmoBugByName (defined in runtime section)
-local runAmmoBugByName
 
 -- Helper: create a gun button inside the list
 local function makeGunBtn(gunName, order)
@@ -1246,8 +1310,10 @@ infAmmoStatusLbl.TextXAlignment = Enum.TextXAlignment.Left; infAmmoStatusLbl.Par
 table.insert(TranslatableUI, {obj=infAmmoStatusLbl, key="InfAmmoReady"})
 
 Spc(cP, 99)
+end
 
 -- ==================== COLOR TAB ====================
+do
 local co1 = Sec(coP, "HIGHLIGHT COLORS", Ic.Palette, 1, "HighlightColors")
 CPick(co1, "Fill Color", Config.FillColor, 1, function(c) Config.FillColor = c; UpdHLCol() end, "FillColor")
 CPick(co1, "Outline Color", Config.OutlineColor, 2, function(c) Config.OutlineColor = c; UpdHLCol() end, "OutlineColor")
@@ -1262,9 +1328,11 @@ CPick(co2, "Circle Color", Config.AimlockColor, 1, function(c)
 end, "AimlockCircleColor")
 
 Spc(coP, 99)
+end
 
 -- ==================== SETTINGS TAB ====================
-local sc1 = Sec(sP, "UI SCALE", Ic.Rocket, 1, "UIScale")
+do
+local sc1 = Sec(sP, "UI SCALE", Ic.Scaling, 1, "UIScale")
 do
     local scalePresets = {{label="S", val=0.75}, {label="M", val=1.0}, {label="L", val=1.15}, {label="XL", val=1.35}}
     local scRow = Instance.new("Frame"); scRow.Size = UDim2.new(1,0,0,36); scRow.BackgroundTransparency = 1; scRow.LayoutOrder = 1; scRow.Parent = sc1
@@ -1291,12 +1359,14 @@ do
 end
 
 local sc3 = Sec(sP, "INFO", Ic.Info, 2, "Info")
-local pcI = IRow(sc3, "Players", tostring(#Players:GetPlayers()), 1, "Players")
-local fpI = IRow(sc3, "FPS", "60", 2, "FPS")
+pcI = IRow(sc3, "Players", tostring(#Players:GetPlayers()), 1, "Players")
+fpI = IRow(sc3, "FPS", "60", 2, "FPS")
 IRow(sc3, "Script", "Auren MAX", 3, "Script")
 Spc(sP, 99)
+end
 
 -- ==================== LANGUAGE UPDATE FUNCTION ====================
+do
 function updateAllLangUI()
     -- Update all registered translatable elements
     for _, entry in ipairs(TranslatableUI) do
@@ -1311,8 +1381,10 @@ function updateAllLangUI()
         end
     end
 end
+end
 
 -- ==================== ESP CORE ====================
+do
 function UpdHLCol()
     for _,d in pairs(ESP) do
         if d.hl and d.hl.Parent then
@@ -1409,10 +1481,10 @@ function Rebuild()
 end
 
 _G.AUREN_ESP = ESP
-
-
+end
 
 -- ==================== GHOST NOCLIP ====================
+do
 -- Ghost only: pass through walls but stay on floor (can walk up/down stairs normally)
 -- Ghost + Fly: pass through EVERYTHING including floor (full freedom)
 local ghostRayParams = RaycastParams.new()
@@ -1475,8 +1547,10 @@ local ghostHeartbeatConn = RunService.Heartbeat:Connect(function()
     end
 end)
 table.insert(allConns, ghostHeartbeatConn)
+end
 
 -- ==================== SPEED ENFORCEMENT ====================
+do
 -- Continuously apply Speed so server resets don't override it.
 local speedJumpConn = RunService.Heartbeat:Connect(function()
     if DESTROYED then return end
@@ -1487,16 +1561,18 @@ local speedJumpConn = RunService.Heartbeat:Connect(function()
     if Config.Speed ~= 16 then hum.WalkSpeed = Config.Speed end
 end)
 table.insert(allConns, speedJumpConn)
+end
 
 -- ==================== FLY ====================
-local flyBodyVel = nil
-local flyBodyGyro = nil
-local flyActive = false
+do
+flyBodyVel = nil
+flyBodyGyro = nil
+flyActive = false
 
-local ghostFlyFrozen = false
-local savedWalkSpeed = 16
+ghostFlyFrozen = false
+savedWalkSpeed = 16
 
-local function freezeCharacter(ch, shouldAnchor)
+function freezeCharacter(ch, shouldAnchor)
     if ghostFlyFrozen then return end
     ghostFlyFrozen = true
     -- ANCHOR HRP only if requested (Ghost+Fly needs anchor, normal fly does NOT)
@@ -1532,7 +1608,7 @@ local function freezeCharacter(ch, shouldAnchor)
     end)
 end
 
-local function unfreezeCharacter(ch)
+function unfreezeCharacter(ch)
     if not ghostFlyFrozen then return end
     ghostFlyFrozen = false
     -- UN-ANCHOR HRP
@@ -1554,7 +1630,7 @@ local function unfreezeCharacter(ch)
     end)
 end
 
-local function startFly()
+function startFly()
     if flyActive then return end
     local ch = LocalPlayer.Character; if not ch then return end
     local hrp = ch:FindFirstChild("HumanoidRootPart"); if not hrp then return end
@@ -1583,7 +1659,7 @@ local function startFly()
     freezeCharacter(ch, true) -- anchor=true for all fly modes
 end
 
-local function stopFly()
+function stopFly()
     -- Unfreeze character before stopping
     pcall(function()
         local ch = LocalPlayer.Character
@@ -1700,8 +1776,10 @@ local flyConn = RunService.RenderStepped:Connect(function()
     end
 end)
 table.insert(allConns, flyConn)
+end
 
 -- ==================== RENDER LOOP ====================
+do
 local renderConn = RunService.RenderStepped:Connect(function()
     if DESTROYED then return end
 
@@ -1800,8 +1878,10 @@ local renderConn = RunService.RenderStepped:Connect(function()
 end)
 _G.AUREN_RENDER = renderConn
 table.insert(allConns, renderConn)
+end
 
 -- ==================== AIMLOCK ====================
+do
 -- Crosshair circle at screen center
 aimlockCircle = Instance.new("Frame")
 aimlockCircle.Name = "AUREN_AIMCIRCLE"
@@ -1865,7 +1945,7 @@ table.insert(allConns, aimlockTouchEndConn)
 
 -- Use BindToRenderStep AFTER game camera (priority 201 = after Camera at 200)
 -- so we override the game's camera update without fighting it
-local AIMLOCK_BIND_NAME = "AurenAimlock"
+AIMLOCK_BIND_NAME = "AurenAimlock"
 RunService:BindToRenderStep(AIMLOCK_BIND_NAME, 201, function()
     if DESTROYED or not Config.Aimlock then
         aimlockCircle.Visible = false
@@ -1943,8 +2023,10 @@ RunService:BindToRenderStep(AIMLOCK_BIND_NAME, 201, function()
         end
     end
 end)
+end
 
 -- ==================== INFINITE AMMO (manual: find gun by name → clone bug) ====================
+do
 -- Same proven method as Gemini — clone children, clear, reparent once per click
 runAmmoBugByName = function(gunName)
     if DESTROYED then return end
@@ -1997,8 +2079,10 @@ runAmmoBugByName = function(gunName)
         infAmmoStatusLbl.TextColor3 = T.TxS
     end
 end
+end
 
 -- ==================== ESP TRACERS (Drawing API - lines from top-center to enemy heads) ====================
+do
 local tracerLines = {} -- plr -> Drawing Line object
 
 local function cleanTracer(plr)
@@ -2008,11 +2092,11 @@ local function cleanTracer(plr)
     end
 end
 
-local function cleanAllTracers()
+cleanAllTracers = function()
     for plr in pairs(tracerLines) do cleanTracer(plr) end
 end
 
-local TRACER_BIND_NAME = "AurenTracers"
+TRACER_BIND_NAME = "AurenTracers"
 RunService:BindToRenderStep(TRACER_BIND_NAME, 202, function()
     if DESTROYED or not Config.Tracers then
         -- Hide all lines
@@ -2068,8 +2152,10 @@ RunService:BindToRenderStep(TRACER_BIND_NAME, 202, function()
         if not seen[plr] then cleanTracer(plr) end
     end
 end)
+end
 
 -- ==================== AUTO-DETECT PLAYERS ====================
+do
 local paConn = Players.PlayerAdded:Connect(function(plr)
     if DESTROYED then return end
     if pcI and pcI.Parent then pcI.Text = tostring(#Players:GetPlayers()) end
@@ -2110,15 +2196,19 @@ end)
 table.insert(allConns, lcConn)
 
 _G.AUREN_CONNS = allConns
+end
 
 -- ==================== AUTO RESPONSIVE (screen size change) ====================
+do
 local vpConn = Camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
     if DESTROYED then return end
     UIScaleObj.Scale = getAutoScale() * Config.UIScale
 end)
 table.insert(allConns, vpConn)
+end
 
 -- ==================== HEADER BUTTONS ====================
+do
 local minimized = false
 MinBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
@@ -2184,8 +2274,10 @@ ClsBtn.MouseButton1Click:Connect(function()
     task.wait(fadeTime + 0.05)
     Gui:Destroy()
 end)
+end
 
 -- ==================== FPS COUNTER ====================
+do
 local fc = 0; local ft = tick()
 local hbConn = RunService.Heartbeat:Connect(function()
     if DESTROYED then return end
@@ -2197,8 +2289,10 @@ local hbConn = RunService.Heartbeat:Connect(function()
 end)
 _G.AUREN_HB = hbConn
 table.insert(allConns, hbConn)
+end
 
 -- ==================== SHOW MAIN UI (after everything is built) ====================
+do
 Main.Visible = true; Main.BackgroundTransparency = 1
 Main.Size = UDim2.new(0, BASE_W - 20, 0, BASE_H - 20)
 Main.Position = UDim2.new(0.5, 0, 0, 4)
@@ -2207,3 +2301,5 @@ Tw(Main, {BackgroundTransparency=0, Size=UDim2.new(0,BASE_W,0,BASE_H)}, 0.6, Enu
 print("[Auren MAX] Green-Black Luxury | All features OFF by default. Toggle to enable. Auto-responsive.")
 
 -- (Overlord removed)
+end
+
